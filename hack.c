@@ -72,7 +72,7 @@ int main(int argc, char** argv)
         input.instruction = convert_binary_string_to_u16("0111111111111111");
         cpu(&input, &output);
         // output the value of the A-register
-        input.instruction = convert_binary_string_to_u16("1111110000001000");
+        input.instruction = convert_binary_string_to_u16("1110110000001000");
         cpu(&input, &output);
         printf("%d\n", output.outM);
         assert(output.outM == convert_binary_string_to_u16("0111111111111111"));
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
         // Execute
         cpu(&cpu_in, &cpu_out);
 
-        display_buffer(&data_memory[24575], 256, 512);
+        // display_buffer(&data_memory[24575], 256, 512);
         printf("\n\n\n");
         
     }
@@ -144,41 +144,41 @@ void cpu(struct cpu_input *input, struct cpu_output *output)
         // If the first comp flag is set M which stands for the fetched memory is the second operant
         // if it isn't set A is the other operand
         u16 second_operand = comp[0] ? input->inM : A;
-        if (comp[0] && !comp[1] && comp[2] && !comp[3] && comp[4] && !comp[5]) 
+        if (comp[1] && !comp[2] && comp[3] && !comp[4] && comp[5] && !comp[6]) 
             computed_result = 0;
-        else if (comp[0] && comp[1] && comp[2] && comp[3] && comp[4] && comp[5]) 
+        else if (comp[1] && comp[2] && comp[3] && comp[4] && comp[5] && comp[6]) 
             computed_result = 1;
-        else if (comp[0] && comp[1] && comp[2] && !comp[3] && comp[4] && !comp[5]) 
+        else if (comp[1] && comp[2] && comp[3] && !comp[4] && comp[5] && !comp[6]) 
             computed_result = -1;
-        else if (!comp[0] && !comp[1] && comp[2] && comp[3] && !comp[4] && !comp[5]) 
+        else if (!comp[1] && !comp[2] && comp[3] && comp[4] && !comp[5] && !comp[6]) 
             computed_result = D;
-        else if (comp[0] && comp[1] && !comp[2] && !comp[3] && !comp[4] && !comp[5]) 
+        else if (comp[1] && comp[2] && !comp[3] && !comp[4] && !comp[5] && !comp[6]) 
             computed_result = second_operand;
-        else if (!comp[0] && !comp[1] && comp[2] && comp[3] && !comp[4] && comp[5]) 
+        else if (!comp[1] && !comp[2] && comp[3] && comp[4] && !comp[5] && comp[6]) 
             computed_result = !D;
-        else if (comp[0] && comp[1] && !comp[2] && !comp[3] && !comp[4] && comp[5]) 
+        else if (comp[1] && comp[2] && !comp[3] && !comp[4] && !comp[5] && comp[6]) 
             computed_result = !second_operand;
-        else if (!comp[0] && !comp[1] && comp[2] && comp[3] && comp[4] && comp[5]) 
+        else if (!comp[1] && !comp[2] && comp[3] && comp[4] && comp[5] && comp[6]) 
             computed_result = -D;
-        else if (comp[0] && comp[1] && !comp[2] && !comp[3] && comp[4] && comp[5]) 
+        else if (comp[1] && comp[2] && !comp[3] && !comp[4] && comp[5] && comp[6]) 
             computed_result = -second_operand;
-        else if (!comp[0] && comp[1] && comp[2] && comp[3] && comp[4] && comp[5]) 
+        else if (!comp[1] && comp[2] && comp[3] && comp[4] && comp[5] && comp[6]) 
             computed_result = D+1;
-        else if (comp[0] && comp[1] && !comp[2] && comp[3] && comp[4] && comp[5]) 
+        else if (comp[1] && comp[2] && !comp[3] && comp[4] && comp[5] && comp[6]) 
             computed_result = second_operand+1;
-        else if (!comp[0] && !comp[1] && comp[2] && comp[3] && comp[4] && !comp[5]) 
+        else if (!comp[1] && !comp[2] && comp[3] && comp[4] && comp[5] && !comp[6]) 
             computed_result = D-1;
-        else if (comp[0] && comp[1] && !comp[2] && !comp[3] && comp[4] && !comp[5]) 
+        else if (comp[1] && comp[2] && !comp[3] && !comp[4] && comp[5] && !comp[6]) 
             computed_result = second_operand-1;
-        else if (!comp[0] && !comp[1] && !comp[2] && !comp[3] && comp[4] && !comp[5]) 
+        else if (!comp[1] && !comp[2] && !comp[3] && !comp[4] && comp[5] && !comp[6]) 
             computed_result = D+second_operand;
-        else if (!comp[0] && comp[1] && !comp[2] && !comp[3] && comp[4] && comp[5]) 
+        else if (!comp[1] && comp[2] && !comp[3] && !comp[4] && comp[5] && comp[6]) 
             computed_result = D-second_operand;
-        else if (!comp[0] && !comp[1] && !comp[2] && comp[3] && comp[4] && comp[5]) 
+        else if (!comp[1] && !comp[2] && !comp[3] && comp[4] && comp[5] && comp[6]) 
             computed_result = second_operand-D;
-        else if (!comp[0] && !comp[1] && !comp[2] && !comp[3] && !comp[4] && !comp[5]) 
+        else if (!comp[1] && !comp[2] && !comp[3] && !comp[4] && !comp[5] && !comp[6]) 
             computed_result = D&second_operand;
-        else if (!comp[0] && comp[1] && !comp[2] && comp[3] && !comp[4] && comp[5]) 
+        else if (!comp[1] && comp[2] && !comp[3] && comp[4] && !comp[5] && comp[6]) 
             computed_result = D|second_operand;
 
         // Store the computed result in different registers and/or the memory
