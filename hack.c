@@ -58,10 +58,25 @@ int main(int argc, char** argv)
     load_program_from_file(argv[1], instruction_memory, ROM_SIZE);
 
 #if DEBUG 
-    // TODO: Test the CPU with assert statements
     assert(convert_binary_string_to_u16("0000000000000001") == 1);
     assert(convert_binary_string_to_u16("1000000000000000") == 32768);
     assert(convert_binary_string_to_u16("1000000000000001") == 32769);
+ 
+    // Test the CPU
+    {
+        // Initialize in- and output to zero
+        struct cpu_input input;
+        struct cpu_output output;
+        memset(&input, 0, sizeof(struct cpu_input) + sizeof(struct cpu_output));
+        // Write the binary number "0111111111111111" into the A-register
+        input.instruction = convert_binary_string_to_u16("0111111111111111");
+        cpu(&input, &output);
+        // output the value of the A-register
+        input.instruction = convert_binary_string_to_u16("1111110000001000");
+        cpu(&input, &output);
+        printf("%d\n", output.outM);
+        assert(output.outM == convert_binary_string_to_u16("0111111111111111"));
+    }
 #endif
 
     for(;;)
