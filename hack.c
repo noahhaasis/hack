@@ -5,8 +5,11 @@
 #include <string.h>
 #include <assert.h>
 
+#include "SDL2/SDL.h"
+
 #define RAM_SIZE 24577
 #define ROM_SIZE 32768 // 2**15(32K)
+#define KEYMAP_ADDRESS 24576 
 
 typedef int16_t s16;
 typedef uint16_t u16;
@@ -46,6 +49,14 @@ int main(int argc, char** argv)
         fprintf(stderr, "Usage: ./hack <hack-file>\n");
         return -1;
     }
+
+    // Initialize SDL
+    if (SDL_Init(SDL_INIT_VIDEO) != 0)
+    {
+        SDL_Log("Unable to initialize SDL: %s", SDL_GetError()); 
+        return 1; 
+    }
+
     u16 data_memory[RAM_SIZE];
     u16 instruction_memory[ROM_SIZE];
     struct cpu_input cpu_in;
@@ -68,16 +79,34 @@ int main(int argc, char** argv)
         struct cpu_input input;
         struct cpu_output output;
         memset(&input, 0, sizeof(struct cpu_input) + sizeof(struct cpu_output));
+
         // Write the binary number "0111111111111111" into the A-register
-        input.instruction = convert_binary_string_to_u16("0111111111111111");
+        input.instruction = convert_binary_string_to_u16("0111111111111111");     // A instruction
         cpu(&input, &output);
-        // output the value of the A-register
-        input.instruction = convert_binary_string_to_u16("1110110000001000");
+        assert(output.pc == 1);
+
+        // output the value of the A-register and store the value of the A-register in the D-register
+        input.instruction = convert_binary_string_to_u16("1110110000011000");     // D instruction
+        input.reset = true;
         cpu(&input, &output);
-        printf("%d\n", output.outM);
         assert(output.outM == convert_binary_string_to_u16("0111111111111111"));
+        input.reset = false;
+        assert(output.pc == 0);
+
+        // Store  5 in the A-register and output the result of D - A
+        input.instruction = convert_binary_string_to_u16("0000000000000101");     // A instruction
+        cpu(&input, &output);
+        assert(output.pc == 1);
+
+        // Set set the PC to the value of the A-register
+        input.instruction = convert_binary_string_to_u16("1110010011001111");     // D instruction
+        cpu(&input, &output);
+        assert(output.outM == 32762);
+        assert(output.pc == 5);
+
+        printf("Tested the CPU succesfully!\n");
     }
-#endif
+#endif // DEBUG
 
     for(;;)
     {
@@ -97,10 +126,21 @@ int main(int argc, char** argv)
         // Execute
         cpu(&cpu_in, &cpu_out);
 
-        // display_buffer(&data_memory[24575], 256, 512);
-        printf("\n\n\n");
-        
+        // Draw the screen memory map to the screen       
+ 
+        // Process all keyboard events        
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_KEYDOWN)
+            {
+                data_memory[KEYMAP_ADDRESS] = 1; // TODO: Set the memory to the ascii value of the presed key
+            }
+            else if (event.type == SDL_KEYUP)
+                data_memory[KEYMAP_ADDRESS] = 0;
+        }
     }
+    SDL_Quit();
     return EXIT_SUCCESS;
 }
 
@@ -209,10 +249,10 @@ void cpu(struct cpu_input *input, struct cpu_output *output)
         A = input->instruction;
         output->writeM = false;
     }
-    if (input->reset)
-        output->pc = PC = 0;
     output->addressM = A;
     output->pc = ++PC;
+    if (input->reset)
+        output->pc = PC = 0;
 }
 
 
