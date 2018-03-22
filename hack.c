@@ -152,7 +152,9 @@ int main(int argc, char** argv)
             if (event.type == SDL_KEYDOWN)
             {
                 const char *key = SDL_GetKeyName(event.key.keysym.sym);
-                data_memory[KEYMAP_ADDRESS] = 1; // TODO: Set the memory to the ascii value of the presed key
+                if (strlen(key) == 1 && (key[0] >= 'A' && key[0] <= 'Z'))
+                    data_memory[KEYMAP_ADDRESS] = key[0];
+                // TODO: Set the memory to the ascii value of the presed key
                 printf("%s\n", key);
             }
             else if (event.type == SDL_KEYUP)
