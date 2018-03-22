@@ -12,6 +12,7 @@
 #define KEYMAP_ADDRESS 24576 
 
 typedef int16_t s16;
+typedef uint32_t u32;
 typedef uint16_t u16;
 typedef uint8_t u8;
 
@@ -55,6 +56,22 @@ int main(int argc, char** argv)
     {
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError()); 
         return 1; 
+    }
+    SDL_Window *window;
+    u32 window_flags = SDL_WINDOW_SHOWN | SDL_WINDOW_INPUT_FOCUS;
+    window = SDL_CreateWindow(
+        "Hack",
+        SDL_WINDOWPOS_UNDEFINED,
+        SDL_WINDOWPOS_UNDEFINED,
+        512,
+        256,
+        window_flags
+    );
+    if (!window)
+    {
+        SDL_Log("Could not create window: %s", SDL_GetError());
+        SDL_Quit();
+        return 1;
     }
 
     u16 data_memory[RAM_SIZE];
@@ -134,12 +151,16 @@ int main(int argc, char** argv)
         {
             if (event.type == SDL_KEYDOWN)
             {
+                const char *key = SDL_GetKeyName(event.key.keysym.sym);
                 data_memory[KEYMAP_ADDRESS] = 1; // TODO: Set the memory to the ascii value of the presed key
+                printf("%s\n", key);
             }
             else if (event.type == SDL_KEYUP)
                 data_memory[KEYMAP_ADDRESS] = 0;
         }
     }
+
+    SDL_DestroyWindow(window);
     SDL_Quit();
     return EXIT_SUCCESS;
 }
