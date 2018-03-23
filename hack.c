@@ -10,6 +10,8 @@
 #define RAM_SIZE 24577
 #define ROM_SIZE 32768 // 2**15(32K)
 #define KEYMAP_ADDRESS 24576 
+#define SCREEN_HEIGHT 256
+#define SCREEN_WIDTH 512
 
 typedef int16_t s16;
 typedef uint32_t u32;
@@ -58,18 +60,27 @@ int main(int argc, char** argv)
         return 1; 
     }
     SDL_Window *window;
+    SDL_Renderer *renderer;
     u32 window_flags = SDL_WINDOW_SHOWN | SDL_WINDOW_INPUT_FOCUS;
     window = SDL_CreateWindow(
         "Hack",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
-        512,
-        256,
+        SCREEN_WIDTH,
+        SCREEN_HEIGHT,
         window_flags
     );
     if (!window)
     {
         SDL_Log("Could not create window: %s", SDL_GetError());
+        SDL_Quit();
+        return 1;
+    }
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
+    if (!renderer)
+    {
+        SDL_Log("Could not create renderer: %s", SDL_GetError());
+        SDL_DestroyWindow(window);
         SDL_Quit();
         return 1;
     }
@@ -162,6 +173,7 @@ int main(int argc, char** argv)
         }
     }
 
+    SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
     return EXIT_SUCCESS;
