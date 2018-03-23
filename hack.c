@@ -36,7 +36,7 @@ struct cpu_output
 void cpu(struct cpu_input *input, struct cpu_output *output);
 
 /* Takes a string containing a binary number in ascii and big endian notation and converts it into a u16 */
-u16 convert_binary_string_to_u16(const char *string);
+u16 binary_to_u16(const char *string);
 
 /* Reads a hack assembly program and writes it to the buffer */
 void load_program_from_file(const char* filename, u16 *buffer, int buffersize);
@@ -97,9 +97,9 @@ int main(int argc, char** argv)
     load_program_from_file(argv[1], instruction_memory, ROM_SIZE);
 
 #if DEBUG 
-    assert(convert_binary_string_to_u16("0000000000000001") == 1);
-    assert(convert_binary_string_to_u16("1000000000000000") == 32768);
-    assert(convert_binary_string_to_u16("1000000000000001") == 32769);
+    assert(binary_to_u16("0000000000000001") == 1);
+    assert(binary_to_u16("1000000000000000") == 32768);
+    assert(binary_to_u16("1000000000000001") == 32769);
  
     // Test the CPU
     {
@@ -109,25 +109,25 @@ int main(int argc, char** argv)
         memset(&input, 0, sizeof(struct cpu_input) + sizeof(struct cpu_output));
 
         // Write the binary number "0111111111111111" into the A-register
-        input.instruction = convert_binary_string_to_u16("0111111111111111");     // A instruction
+        input.instruction = binary_to_u16("0111111111111111");     // A instruction
         cpu(&input, &output);
         assert(output.pc == 1);
 
         // output the value of the A-register and store the value of the A-register in the D-register
-        input.instruction = convert_binary_string_to_u16("1110110000011000");     // D instruction
+        input.instruction = binary_to_u16("1110110000011000");     // D instruction
         input.reset = true;
         cpu(&input, &output);
-        assert(output.outM == convert_binary_string_to_u16("0111111111111111"));
+        assert(output.outM == binary_to_u16("0111111111111111"));
         input.reset = false;
         assert(output.pc == 0);
 
         // Store  5 in the A-register and output the result of D - A
-        input.instruction = convert_binary_string_to_u16("0000000000000101");     // A instruction
+        input.instruction = binary_to_u16("0000000000000101");     // A instruction
         cpu(&input, &output);
         assert(output.pc == 1);
 
         // Set set the PC to the value of the A-register
-        input.instruction = convert_binary_string_to_u16("1110010011001111");     // D instruction
+        input.instruction = binary_to_u16("1110010011001111");     // D instruction
         cpu(&input, &output);
         assert(output.outM == 32762);
         assert(output.pc == 5);
@@ -302,13 +302,13 @@ void load_program_from_file(const char* filename, u16 *buffer, int buffersize)
     {
         // Skipt the two bytes indicating a new line
         fseek(program, 2, SEEK_CUR);
-        buffer[i] = convert_binary_string_to_u16(line_buffer); 
+        buffer[i] = binary_to_u16(line_buffer); 
     }
     fclose(program);
 }
 
 
-u16 convert_binary_string_to_u16(const char *string)
+u16 binary_to_u16(const char *string)
 {
     u16 result = 0;
     for (int i = 0; i < 16; i++)
