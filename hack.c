@@ -84,8 +84,8 @@ int main(int argc, char** argv)
     }
     texture = SDL_CreateTexture(
         renderer, 
-        SDL_PIXELFORMAT_RGB888, 
-        SDL_TEXTUREACCESS_STATIC, 
+        SDL_PIXELFORMAT_RGB332, 
+        SDL_TEXTUREACCESS_STREAMING, 
         SCREEN_WIDTH, 
         SCREEN_HEIGHT
     );
