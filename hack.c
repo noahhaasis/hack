@@ -7,6 +7,8 @@
 
 #include "SDL2/SDL.h"
 
+#define WHITE 0xFF
+#define BLACK 0x00
 #define RAM_SIZE 24577
 #define ROM_SIZE 32768 // 2**15(32K)
 #define KEYMAP_ADDRESS 24576 
@@ -103,21 +105,42 @@ int main(int argc, char** argv)
         SDL_Log("Could not allocate a screen buffer");     
     } 
 
-    u16 data_memory[RAM_SIZE];
-    u16 instruction_memory[ROM_SIZE];
-    struct cpu_input cpu_in;
-    struct cpu_output cpu_out;
-    // Initialize everything to zero
-    memset(data_memory, 0, RAM_SIZE * 2);
-    memset(instruction_memory, 0, ROM_SIZE * 2);
-    memset(&cpu_in, 0, sizeof(struct cpu_input));    
-    memset(&cpu_out, 0, sizeof(struct cpu_output));
+    u16 data_memory[RAM_SIZE] = {0};
+    u16 instruction_memory[ROM_SIZE] = {0};
+    struct cpu_input cpu_in = {0};
+    struct cpu_output cpu_out = {0};
     load_program_from_file(argv[1], instruction_memory, ROM_SIZE);
 
 #if DEBUG 
     assert(binary_to_u16("0000000000000001") == 1);
     assert(binary_to_u16("1000000000000000") == 32768);
     assert(binary_to_u16("1000000000000001") == 32769);
+    {
+        // Experiment with the pixel formats
+        // TODO: Why does the SDL_PIXELFORMAT_INDEX1MSB doesn't have a palette
+        SDL_PixelFormat *format = SDL_AllocFormat(SDL_PIXELFORMAT_INDEX1MSB);
+        printf(
+            "\
+             Bits per Pixel: %d\n\
+             Bytes per Pixel: %d\n\
+             RMask: %d \n\
+             GMask: %d \n\
+             BMask: %d \n\
+             AMask: %d\n\
+             Is indexed: %d\n\
+             ",
+            format->BitsPerPixel,
+            format->BytesPerPixel,
+            format->Rmask,
+            format->Gmask,
+            format->Bmask,
+            format->Amask,
+            SDL_ISPIXELFORMAT_INDEXED(format->format)
+        );
+        if (SDL_ISPIXELFORMAT_INDEXED(format->format))
+            printf("Colors in palette: %d\n", format->palette->ncolors);
+        SDL_FreeFormat(format);
+    }
  
     // Test the CPU
     {
@@ -153,8 +176,8 @@ int main(int argc, char** argv)
         printf("Tested the CPU succesfully!\n");
     }
 #endif // DEBUG
-
-    for(;;)
+    bool running = true;
+    while (running)
     {
         if (cpu_out.addressM >= RAM_SIZE || cpu_out.pc >= ROM_SIZE ||
             cpu_out.addressM < 0 || cpu_out.pc < 0)
@@ -172,23 +195,40 @@ int main(int argc, char** argv)
         // Execute
         cpu(&cpu_in, &cpu_out);
 
-        // Draw the screen memory map to the screen       
- 
         // Process all keyboard events        
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            if (event.type == SDL_KEYDOWN)
+            switch (event.type)
             {
-                const char *key = SDL_GetKeyName(event.key.keysym.sym);
-                if (strlen(key) == 1 && (key[0] >= 'A' && key[0] <= 'Z'))
-                    data_memory[KEYMAP_ADDRESS] = key[0];
-                // TODO: Set the memory to the ascii value of the presed key
-                printf("%s\n", key);
-            }
-            else if (event.type == SDL_KEYUP)
-                data_memory[KEYMAP_ADDRESS] = 0;
+                case SDL_KEYDOWN:
+                {
+                    const char *key = SDL_GetKeyName(event.key.keysym.sym);
+                    if (strlen(key) == 1 && (key[0] >= 'A' && key[0] <= 'Z'))
+                        data_memory[KEYMAP_ADDRESS] = key[0];
+                }
+                case SDL_KEYUP:
+                    data_memory[KEYMAP_ADDRESS] = 0;
+                    break;
+                case SDL_QUIT:
+                    running = false;
+                    break;
+                default:
+                    break;
+                }
         }
+
+        // Draw the screen_pixel to the screen
+        // TODO: Only render the updated area (Pass a rect struct determining the area to tender instead of NULL)
+        SDL_RenderClear(renderer);
+        SDL_RenderReadPixels(
+            renderer,
+            NULL,
+            SDL_PIXELFORMAT_RGB332,
+            screen_pixel,
+            SCREEN_WIDTH
+        );
+        SDL_RenderPresent(renderer);
     }
 
     SDL_DestroyTexture(texture);
