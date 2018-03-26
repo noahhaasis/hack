@@ -89,7 +89,7 @@ int main(int argc, char** argv)
         SCREEN_WIDTH, 
         SCREEN_HEIGHT
     );
-    if (!renderer)
+    if (!texture)
     {
         SDL_Log("Could not create texture: %s", SDL_GetError());
         SDL_DestroyWindow(window);
@@ -97,7 +97,11 @@ int main(int argc, char** argv)
         SDL_Quit();
         return 1;
     }
-    
+    u8 *screen_pixel = calloc(SCREEN_HEIGHT * SCREEN_WIDTH, 1);
+    if (!screen_pixel)
+    {
+        SDL_Log("Could not allocate a screen buffer");     
+    } 
 
     u16 data_memory[RAM_SIZE];
     u16 instruction_memory[ROM_SIZE];
