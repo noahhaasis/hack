@@ -41,9 +41,6 @@ u16 binary_to_u16(const char *string);
 /* Reads a hack assembly program and writes it to the buffer */
 void load_program_from_file(const char* filename, u16 *buffer, int buffersize);
 
-/* Prints a buffer to the screen where each pixel is represented by one bit */
-void display_buffer(u16 *buffer, int height, int width);
-
 
 int main(int argc, char** argv)
 {
@@ -61,6 +58,7 @@ int main(int argc, char** argv)
     }
     SDL_Window *window;
     SDL_Renderer *renderer;
+    SDL_Texture *texture;
     u32 window_flags = SDL_WINDOW_SHOWN | SDL_WINDOW_INPUT_FOCUS;
     window = SDL_CreateWindow(
         "Hack",
@@ -84,6 +82,22 @@ int main(int argc, char** argv)
         SDL_Quit();
         return 1;
     }
+    texture = SDL_CreateTexture(
+        renderer, 
+        SDL_PIXELFORMAT_RGB888, 
+        SDL_TEXTUREACCESS_STATIC, 
+        SCREEN_WIDTH, 
+        SCREEN_HEIGHT
+    );
+    if (!renderer)
+    {
+        SDL_Log("Could not create texture: %s", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_DestroyRenderer(renderer);
+        SDL_Quit();
+        return 1;
+    }
+    
 
     u16 data_memory[RAM_SIZE];
     u16 instruction_memory[ROM_SIZE];
@@ -173,6 +187,7 @@ int main(int argc, char** argv)
         }
     }
 
+    SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -319,18 +334,3 @@ u16 binary_to_u16(const char *string)
 }
 
 
-void display_buffer(u16 *buffer, int height, int width)
-{
-    for (int i = 0; i < height; i++)
-    {
-        for (int j = 0; j < width; j++)
-        {
-            bool white = buffer[(width/16)*i + j/8] & (1 >> (j % 8));
-            if (white)
-                printf(" ");
-            else
-                printf("#");
-        }
-        printf("\n");
-    }
-}
