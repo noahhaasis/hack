@@ -7,8 +7,6 @@
 
 #include "SDL2/SDL.h"
 
-#define WHITE 0xFF
-#define BLACK 0x00
 #define RAM_SIZE 24577
 #define ROM_SIZE 32768 // 2**15(32K)
 #define KEYMAP_ADDRESS 24576 
@@ -104,6 +102,9 @@ int main(int argc, char** argv)
     {
         SDL_Log("Could not allocate a screen buffer");     
     } 
+
+    const u32 WHITE = SDL_MapRGB(format, 0xFF, 0xFF, 0xFF);
+    const u32 BLACK = SDL_MapRGB(format, 0x00, 0x00, 0x00);
 
     u16 data_memory[RAM_SIZE] = {0};
     u16 instruction_memory[ROM_SIZE] = {0};
