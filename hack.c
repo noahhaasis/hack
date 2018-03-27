@@ -58,7 +58,7 @@ int main(int argc, char** argv)
     }
     SDL_Window *window;
     SDL_Renderer *renderer;
-    SDL_Texture *texture;
+    SDL_PixelFormat *format;
     u32 window_flags = SDL_WINDOW_SHOWN | SDL_WINDOW_INPUT_FOCUS;
     window = SDL_CreateWindow(
         "Hack",
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
         SDL_Quit();
         return 1;
     }
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
     if (!renderer)
     {
         SDL_Log("Could not create renderer: %s", SDL_GetError());
@@ -82,24 +82,22 @@ int main(int argc, char** argv)
         SDL_Quit();
         return 1;
     }
-    texture = SDL_CreateTexture(
-        renderer, 
-        SDL_PIXELFORMAT_RGB332, 
-        SDL_TEXTUREACCESS_STREAMING, 
-        SCREEN_WIDTH, 
-        SCREEN_HEIGHT
-    );
-    if (!texture)
+    format = SDL_AllocFormat(SDL_PIXELFORMAT_INDEX1MSB);
+    if (!format)
     {
-        SDL_Log("Could not create texture: %s", SDL_GetError());
-        SDL_DestroyWindow(window);
+        SDL_Log("Could not allocate pixelformat: %s", SDL_GetError());
         SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
         SDL_Quit();
         return 1;
     }
-    u8 *screen_pixel = calloc(SCREEN_HEIGHT * SCREEN_WIDTH, 1);
+    u8 *screen_pixel = calloc(SCREEN_HEIGHT * SCREEN_WIDTH, SDL_BYTESPERPIXEL(format->format));
     if (!screen_pixel)
     {
+        SDL_FreeFormat(format);
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
         SDL_Log("Could not allocate a screen buffer");     
     } 
 
@@ -116,32 +114,6 @@ int main(int argc, char** argv)
     assert(binary_to_u16("0000000000000001") == 1);
     assert(binary_to_u16("1000000000000000") == 32768);
     assert(binary_to_u16("1000000000000001") == 32769);
-    {
-        // Experiment with the pixel formats
-        // TODO: Why does the SDL_PIXELFORMAT_INDEX1MSB doesn't have a palette
-        SDL_PixelFormat *format = SDL_AllocFormat(SDL_PIXELFORMAT_INDEX1MSB);
-        printf(
-            "\
-             Bits per Pixel: %d\n\
-             Bytes per Pixel: %d\n\
-             RMask: %d \n\
-             GMask: %d \n\
-             BMask: %d \n\
-             AMask: %d\n\
-             Is indexed: %d\n\
-             ",
-            format->BitsPerPixel,
-            format->BytesPerPixel,
-            format->Rmask,
-            format->Gmask,
-            format->Bmask,
-            format->Amask,
-            SDL_ISPIXELFORMAT_INDEXED(format->format)
-        );
-        if (SDL_ISPIXELFORMAT_INDEXED(format->format))
-            printf("Colors in palette: %d\n", format->palette->ncolors);
-        SDL_FreeFormat(format);
-    }
  
     // Test the CPU
     {
@@ -177,6 +149,7 @@ int main(int argc, char** argv)
         printf("Tested the CPU succesfully!\n");
     }
 #endif // DEBUG
+
     bool running = true;
     while (running)
     {
@@ -225,14 +198,14 @@ int main(int argc, char** argv)
         SDL_RenderReadPixels(
             renderer,
             NULL,
-            SDL_PIXELFORMAT_RGB332,
+            format->format,
             screen_pixel,
             SCREEN_WIDTH
         );
         SDL_RenderPresent(renderer);
     }
 
-    SDL_DestroyTexture(texture);
+    SDL_FreeFormat(format);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
